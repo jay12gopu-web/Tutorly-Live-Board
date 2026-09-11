@@ -1,7 +1,8 @@
 import { useRef, useState, type PointerEvent, type WheelEvent } from 'react';
 import { Crosshair, Minus, Move, Plus, RotateCcw } from 'lucide-react';
 import { angleOf, arcPath, distance, hitTest } from '@/board/geometry';
-import type { AnyBoardObject, BoardCommand, BoardState, Point, ToolId } from '@/board/types';
+import { mathToCanvas } from '@/board/graph';
+import type { AnyBoardObject, BoardCommand, BoardState, GraphConfig, Point, ToolId } from '@/board/types';
 
 type BoardCanvasProps = {
   state: BoardState;
@@ -9,6 +10,8 @@ type BoardCanvasProps = {
   selectedId: string | null;
   panMode: boolean;
   studentWorkMode: boolean;
+  ariaLabel?: string;
+  showBaseGrid?: boolean;
   onSelect: (id: string | null) => void;
   onCommand: (command: BoardCommand) => void;
   onViewport: (viewport: BoardState['viewport']) => void;
@@ -19,10 +22,66 @@ type BoardCanvasProps = {
 type Draft = { start: Point; current: Point; points?: Point[] };
 
 const colorFor = (object: AnyBoardObject) => object.stroke ?? (object.createdBy === 'tutorly' ? '#6874e8' : '#45979b');
-const lineEnd = (c: { x1: number; y1: number; x2: number; y2: number }) => {
+const rayEnd = (c: { x1: number; y1: number; x2: number; y2: number }) => {
   const length = Math.hypot(c.x2 - c.x1, c.y2 - c.y1) || 1;
-  return { x: c.x1 + ((c.x2 - c.x1) / length) * 100, y: c.y1 + ((c.y2 - c.y1) / length) * 100 };
+  const extension = 1200;
+  return { x: c.x1 + ((c.x2 - c.x1) / length) * extension, y: c.y1 + ((c.y2 - c.y1) / length) * extension };
 };
+
+const valuesForAxis = (min: number, max: number, step: number) => {
+  const safeStep = Math.max(0.0001, Math.abs(step));
+  const first = Math.ceil(min / safeStep) * safeStep;
+  const count = Math.min(50, Math.floor((max - first) / safeStep) + 1);
+  return Array.from({ length: Math.max(0, count) }, (_, index) => Number((first + index * safeStep).toFixed(6)));
+};
+
+function GraphGrid({ graph, stroke, opacity }: { graph: GraphConfig; stroke: string; opacity: number }) {
+  const xValues = valuesForAxis(graph.xMin, graph.xMax, graph.xStep ?? 1);
+  const yValues = valuesForAxis(graph.yMin, graph.yMax, graph.yStep ?? 1);
+  return (
+    <g stroke={stroke} strokeWidth="1" opacity={opacity}>
+      {xValues.map((value) => {
+        const p = mathToCanvas(graph, value, 0);
+        return <line key={`gx-${value}`} x1={p.x} y1={graph.y} x2={p.x} y2={graph.y + graph.height} />;
+      })}
+      {yValues.map((value) => {
+        const p = mathToCanvas(graph, 0, value);
+        return <line key={`gy-${value}`} x1={graph.x} y1={p.y} x2={graph.x + graph.width} y2={p.y} />;
+      })}
+    </g>
+  );
+}
+
+function GraphAxes({ graph, stroke }: { graph: GraphConfig; stroke: string }) {
+  const xStep = graph.xStep ?? 1;
+  const yStep = graph.yStep ?? 1;
+  const xValues = valuesForAxis(graph.xMin, graph.xMax, xStep);
+  const yValues = valuesForAxis(graph.yMin, graph.yMax, yStep);
+  const origin = mathToCanvas(graph, 0, 0);
+  const axisY = Math.max(graph.y, Math.min(graph.y + graph.height, origin.y));
+  const axisX = Math.max(graph.x, Math.min(graph.x + graph.width, origin.x));
+  return (
+    <g>
+      <g stroke={stroke} strokeWidth="1.7" opacity=".95">
+        <line x1={graph.x} y1={axisY} x2={graph.x + graph.width} y2={axisY} />
+        <line x1={axisX} y1={graph.y} x2={axisX} y2={graph.y + graph.height} />
+      </g>
+      <g fill="#72789b" fontFamily="Space Grotesk, sans-serif" fontSize="12">
+        {xValues.filter((value) => Math.abs(value) > 1e-9).map((value) => {
+          const p = mathToCanvas(graph, value, 0);
+          return <g key={`xt-${value}`}><line x1={p.x} y1={axisY - 5} x2={p.x} y2={axisY + 5} stroke={stroke} /><text x={p.x - 6} y={axisY + 20}>{value}</text></g>;
+        })}
+        {yValues.filter((value) => Math.abs(value) > 1e-9).map((value) => {
+          const p = mathToCanvas(graph, 0, value);
+          return <g key={`yt-${value}`}><line x1={axisX - 5} y1={p.y} x2={axisX + 5} y2={p.y} stroke={stroke} /><text x={axisX + 9} y={p.y + 4}>{value}</text></g>;
+        })}
+        <text x={graph.x + graph.width + 10} y={axisY + 5} fontWeight="700">{graph.xLabel ?? 'x'}</text>
+        <text x={axisX + 9} y={graph.y - 9} fontWeight="700">{graph.yLabel ?? 'y'}</text>
+        {graph.xMin <= 0 && graph.xMax >= 0 && graph.yMin <= 0 && graph.yMax >= 0 && <text x={axisX + 8} y={axisY + 18}>0</text>}
+      </g>
+    </g>
+  );
+}
 
 function ObjectShape({ object, selected, dragOffset }: { object: AnyBoardObject; selected: boolean; dragOffset: Point }) {
   const c: any = object.coordinates;
@@ -44,20 +103,20 @@ function ObjectShape({ object, selected, dragOffset }: { object: AnyBoardObject;
   return (
     <g key={object.id} transform={transform} data-object-id={object.id}>
       {object.type === 'point' && <circle {...common} cx={c.x} cy={c.y} r={selected ? 7 : 5} fill={stroke} />}
-      {(object.type === 'line' || object.type === 'ray' || object.type === 'arrow') && <line {...common} x1={c.x1} y1={c.y1} x2={object.type === 'ray' ? lineEnd(c).x : c.x2} y2={object.type === 'ray' ? lineEnd(c).y : c.y2} markerEnd={object.type === 'arrow' || object.type === 'ray' ? 'url(#arrowhead)' : undefined} />}
+      {(object.type === 'line' || object.type === 'ray' || object.type === 'arrow') && <line {...common} x1={c.x1} y1={c.y1} x2={object.type === 'ray' ? rayEnd(c).x : c.x2} y2={object.type === 'ray' ? rayEnd(c).y : c.y2} markerEnd={object.type === 'arrow' || object.type === 'ray' ? 'url(#arrowhead)' : undefined} />}
       {object.type === 'circle' && <circle {...common} cx={c.cx} cy={c.cy} r={c.r} />}
       {object.type === 'arc' && <path {...common} d={arcPath(c.cx, c.cy, c.r, c.startAngle, c.endAngle)} />}
       {object.type === 'rectangle' && <rect {...common} x={c.x} y={c.y} width={c.width} height={c.height} rx="3" />}
       {(object.type === 'path' || object.type === 'highlight') && <polyline {...common} points={c.points.map((p: Point) => `${p.x},${p.y}`).join(' ')} strokeLinecap="round" strokeLinejoin="round" />}
       {(object.type === 'text' || object.type === 'equation') && <text className={`board-object ${object.createdBy} ${animationClass}`} style={common.style} x={c.x} y={c.y} fontSize={c.fontSize} fill={stroke} fontFamily="Space Grotesk, sans-serif" fontWeight={object.type === 'equation' ? 600 : 500}>{c.text}</text>}
-      {object.type === 'axes' && <g className={`board-object ${animationClass}`} style={common.style} stroke="#a5a9c6" strokeWidth="1.5" opacity=".8"><line x1={c.x} y1={c.y + c.height / 2} x2={c.x + c.width} y2={c.y + c.height / 2} /><line x1={c.x + c.width / 2} y1={c.y} x2={c.x + c.width / 2} y2={c.y + c.height} /></g>}
-      {object.type === 'graph' && <g className={`board-object ${animationClass}`} style={common.style} stroke="#e1e4f1" strokeWidth="1">{Array.from({ length: Math.floor(c.width / c.step) + 1 }, (_, i) => <line key={`v-${i}`} x1={c.x + i * c.step} y1={c.y} x2={c.x + i * c.step} y2={c.y + c.height} />)}{Array.from({ length: Math.floor(c.height / c.step) + 1 }, (_, i) => <line key={`h-${i}`} x1={c.x} y1={c.y + i * c.step} x2={c.x + c.width} y2={c.y + i * c.step} />)}</g>}
+      {object.type === 'axes' && <g className={`board-object ${animationClass}`} style={common.style} opacity={object.opacity ?? 1}><GraphAxes graph={c as GraphConfig} stroke={stroke} /></g>}
+      {object.type === 'graph' && <g className={`board-object ${animationClass}`} style={common.style}><GraphGrid graph={c as GraphConfig} stroke={stroke} opacity={object.opacity ?? .8} /></g>}
       {label && labelPoint && <text className={`board-label ${animationClass}`} style={common.style} x={labelPoint.x} y={labelPoint.y}>{object.label}</text>}
     </g>
   );
 }
 
-export function BoardCanvas({ state, activeTool, selectedId, panMode, studentWorkMode, onSelect, onCommand, onViewport, onStudentAction, onTogglePan }: BoardCanvasProps) {
+export function BoardCanvas({ state, activeTool, selectedId, panMode, studentWorkMode, ariaLabel = 'Tutorly visual lesson', showBaseGrid = false, onSelect, onCommand, onViewport, onStudentAction, onTogglePan }: BoardCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const draftRef = useRef<Draft | null>(null);
   const dragRef = useRef<{ id: string; start: Point } | null>(null);
@@ -96,7 +155,7 @@ export function BoardCanvas({ state, activeTool, selectedId, panMode, studentWor
     if (!studentWorkMode) return;
     if (activeTool === 'select') { const hit = objectAt(point); onSelect(hit?.id ?? null); if (hit) dragRef.current = { id: hit.id, start: point }; return; }
     if (activeTool === 'eraser') { const hit = objectAt(point); if (hit) { onCommand({ type: 'delete_object', payload: { id: hit.id } }); onSelect(null); } return; }
-    if (activeTool === 'point') { onCommand({ type: 'draw_point', payload: { x: point.x, y: point.y, ...{ createdBy: 'student' as const } } }); onStudentAction('point'); return; }
+    if (activeTool === 'point') { onCommand({ type: 'draw_point', payload: { x: point.x, y: point.y, createdBy: 'student' } }); onStudentAction('point'); return; }
     if (activeTool === 'text' || activeTool === 'equation') {
       const text = window.prompt(activeTool === 'equation' ? 'Enter an equation' : 'Enter a label');
       if (text?.trim()) { onCommand({ type: 'draw_text', payload: { x: point.x, y: point.y, text: text.trim(), equation: activeTool === 'equation', createdBy: 'student' } }); onStudentAction(activeTool); }
@@ -135,11 +194,15 @@ export function BoardCanvas({ state, activeTool, selectedId, panMode, studentWor
   return (
     <div className="board-wrap">
       {studentWorkMode ? <div className="object-tag" data-testid="status-student-layer"><strong>My work</strong> · StudentLayer</div> : <div className="lesson-live-mark"><i /> Tutorly is drawing</div>}
-      <svg ref={svgRef} className="board-svg" viewBox="0 0 1200 760" role="application" aria-label="Interactive angle bisector lesson" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { draftRef.current = null; dragRef.current = null; panRef.current = null; setDraft(null); setDragOffset({ x: 0, y: 0 }); }} onWheel={onWheel}>
-        <defs><pattern id="board-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" className="board-grid" /></pattern><marker id="arrowhead" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M 0 0 L 9 4.5 L 0 9 z" fill="#6874e8" /></marker></defs>
-        <g transform={`translate(${state.viewport.panX} ${state.viewport.panY}) scale(${state.viewport.zoom})`}><rect width="1200" height="760" fill="url(#board-grid)" opacity=".7" />{state.objects.map((object) => <ObjectShape key={object.id} object={object} selected={object.id === selectedId && studentWorkMode} dragOffset={dragRef.current?.id === object.id ? dragOffset : { x: 0, y: 0 }} />)}{renderDraft()}</g>
+      <svg ref={svgRef} className="board-svg" viewBox="0 0 1200 760" role="application" aria-label={ariaLabel} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { draftRef.current = null; dragRef.current = null; panRef.current = null; setDraft(null); setDragOffset({ x: 0, y: 0 }); }} onWheel={onWheel}>
+        <defs><pattern id="board-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" className="board-grid" /></pattern><marker id="arrowhead" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M 0 0 L 9 4.5 L 0 9 z" fill="context-stroke" /></marker></defs>
+        <g transform={`translate(${state.viewport.panX} ${state.viewport.panY}) scale(${state.viewport.zoom})`}>
+          {showBaseGrid && <rect width="1200" height="760" fill="url(#board-grid)" opacity=".7" />}
+          {state.objects.map((object) => <ObjectShape key={object.id} object={object} selected={object.id === selectedId && studentWorkMode} dragOffset={dragRef.current?.id === object.id ? dragOffset : { x: 0, y: 0 }} />)}
+          {renderDraft()}
+        </g>
       </svg>
-      <div className="canvas-help">{studentWorkMode ? (panMode ? 'Drag to pan · scroll to zoom' : 'StudentLayer · tutor marks stay locked') : 'Follow the construction · use the controls below'}</div>
+      <div className="canvas-help">{studentWorkMode ? (panMode ? 'Drag to pan · scroll to zoom' : 'StudentLayer · Tutorly lesson objects stay locked') : 'Watch the lesson draw itself · use playback controls anytime'}</div>
       <div className="board-toolbar" style={{ position: 'absolute', right: 14, top: 14, zIndex: 3 }}>
         <button className="view-control" type="button" data-testid="button-pan-mode" aria-pressed={panMode} title="Pan board" onClick={onTogglePan}><Move size={14} /> {panMode ? 'Panning' : 'Pan'}</button>
         <button className="view-control" type="button" data-testid="button-zoom-out" aria-label="Zoom out" onClick={() => onViewport({ ...state.viewport, zoom: Math.max(.55, state.viewport.zoom - .12) })}><Minus size={14} /></button>

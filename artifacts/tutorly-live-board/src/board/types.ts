@@ -8,6 +8,26 @@ export type ToolId =
 
 export type Point = { x: number; y: number };
 export type CoordinateMap = Record<string, any>;
+export type BoardStyle = { stroke?: string; strokeWidth?: number; opacity?: number };
+
+export type GraphConfig = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  xStep?: number;
+  yStep?: number;
+  xLabel?: string;
+  yLabel?: string;
+};
+
+export type SafeFunctionSpec =
+  | { kind: 'linear'; m: number; b: number }
+  | { kind: 'quadratic'; a: number; b: number; c: number };
 
 export type BoardObject = {
   id: string;
@@ -29,7 +49,7 @@ export type ArcObject = BoardObject & { type: 'arc'; coordinates: { cx: number; 
 export type RectangleObject = BoardObject & { type: 'rectangle'; coordinates: { x: number; y: number; width: number; height: number } };
 export type PathObject = BoardObject & { type: 'path' | 'highlight'; coordinates: { points: Point[] } };
 export type TextObject = BoardObject & { type: 'text' | 'equation'; coordinates: { x: number; y: number; text: string; fontSize: number } };
-export type AxesObject = BoardObject & { type: 'axes' | 'graph'; coordinates: { x: number; y: number; width: number; height: number; step: number } };
+export type AxesObject = BoardObject & { type: 'axes' | 'graph'; coordinates: GraphConfig & { step?: number } };
 
 export type AnyBoardObject =
   | PointObject | SegmentObject | CircleObject | ArcObject | RectangleObject
@@ -43,16 +63,21 @@ export type BoardState = {
   viewport: BoardViewport;
 };
 
+type VisualPayload = { createdBy?: CreatedBy; style?: BoardStyle };
+
 export type BoardCommand =
-  | { type: 'draw_point'; payload: { x: number; y: number; label?: string; createdBy?: CreatedBy } }
-  | { type: 'draw_line' | 'draw_ray' | 'draw_arrow'; payload: { x1: number; y1: number; x2: number; y2: number; label?: string; createdBy?: CreatedBy } }
-  | { type: 'draw_circle'; payload: { cx: number; cy: number; r: number; label?: string; createdBy?: CreatedBy } }
-  | { type: 'draw_arc'; payload: { cx: number; cy: number; r: number; startAngle: number; endAngle: number; label?: string; createdBy?: CreatedBy } }
-  | { type: 'draw_rectangle'; payload: { x: number; y: number; width: number; height: number; label?: string; createdBy?: CreatedBy } }
-  | { type: 'draw_text'; payload: { x: number; y: number; text: string; fontSize?: number; equation?: boolean; createdBy?: CreatedBy } }
-  | { type: 'draw_axes' | 'draw_graph'; payload?: { x?: number; y?: number; width?: number; height?: number; step?: number; createdBy?: CreatedBy } }
-  | { type: 'highlight'; payload: { points: Point[]; label?: string; createdBy?: CreatedBy } }
-  | { type: 'draw_path'; payload: { points: Point[]; label?: string; createdBy?: CreatedBy } }
+  | { type: 'draw_point'; payload: VisualPayload & { x: number; y: number; label?: string } }
+  | { type: 'draw_line' | 'draw_ray' | 'draw_arrow'; payload: VisualPayload & { x1: number; y1: number; x2: number; y2: number; label?: string } }
+  | { type: 'draw_circle'; payload: VisualPayload & { cx: number; cy: number; r: number; label?: string } }
+  | { type: 'draw_arc'; payload: VisualPayload & { cx: number; cy: number; r: number; startAngle: number; endAngle: number; label?: string } }
+  | { type: 'draw_rectangle'; payload: VisualPayload & { x: number; y: number; width: number; height: number; label?: string } }
+  | { type: 'draw_text'; payload: VisualPayload & { x: number; y: number; text: string; fontSize?: number; equation?: boolean } }
+  | { type: 'draw_axes' | 'draw_graph'; payload?: VisualPayload & Partial<GraphConfig> & { step?: number } }
+  | { type: 'plot_point'; payload: VisualPayload & { graph: GraphConfig; xValue: number; yValue: number; label?: string } }
+  | { type: 'plot_function'; payload: VisualPayload & { graph: GraphConfig; fn: SafeFunctionSpec; domain?: { min: number; max: number }; samples?: number; label?: string } }
+  | { type: 'draw_number_line'; payload: VisualPayload & { x: number; y: number; width: number; min: number; max: number; step?: number; interval?: { from: number; to: number; fromClosed: boolean; toClosed: boolean }; label?: string } }
+  | { type: 'highlight'; payload: VisualPayload & { points: Point[]; label?: string } }
+  | { type: 'draw_path'; payload: VisualPayload & { points: Point[]; label?: string } }
   | { type: 'move_object'; payload: { id: string; dx: number; dy: number } }
   | { type: 'delete_object'; payload: { id: string } }
   | { type: 'clear_board' }

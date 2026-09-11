@@ -10,9 +10,11 @@ export class BoardHistory {
     this.engine = new BoardCommandEngine(initial);
   }
 
-  execute(command: BoardCommand) {
-    this.past.push(this.engine.getState());
-    this.future = [];
+  execute(command: BoardCommand, recordHistory = true) {
+    if (recordHistory) {
+      this.past.push(this.engine.getState());
+      this.future = [];
+    }
     return this.engine.execute(command);
   }
 
