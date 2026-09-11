@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Tutorly Live Board"
+description = "A standalone interactive teaching-board prototype for Tutorly, with editable SVG geometry, structured board commands, and a guided angle-bisector lesson."
+version = "1.0.0"
+id = "artifacts/tutorly-live-board"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20877
+
+[services.development]
+run = "pnpm --filter @workspace/tutorly-live-board run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tutorly-live-board", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/tutorly-live-board/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20877"
+BASE_PATH = "/"

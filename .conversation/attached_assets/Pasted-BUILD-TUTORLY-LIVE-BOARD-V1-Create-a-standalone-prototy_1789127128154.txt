@@ -1,0 +1,361 @@
+BUILD: TUTORLY LIVE BOARD V1
+
+Create a standalone prototype of “Tutorly Live Board”.
+
+IMPORTANT:
+This is NOT a new app and NOT a replacement for Tutorly.
+It is a feature prototype that will later be integrated into the existing Tutorly website.
+
+Use:
+- HTML
+- CSS
+- vanilla JavaScript
+
+Keep the code modular and easy to copy into another project.
+
+Do NOT build:
+- authentication
+- subscriptions
+- credits
+- real AI API calls
+- OpenAI keys
+- ElevenLabs keys
+- Sarvam
+- databases
+
+Use mock/demo AI behavior only.
+
+==================================================
+DESIGN
+==================================================
+
+Match Tutorly’s current theme:
+
+- very light white / pale lavender background
+- blue → purple gradients
+- rounded cards
+- soft shadows
+- clean modern student UI
+- minimal clutter
+- professional, not childish
+
+Main layout:
+
+TOP BAR
+- Tutorly logo/name
+- “Live Board”
+- current topic, e.g. “Angle Bisectors”
+- Undo
+- Redo
+- Clear
+- Exit Board
+
+LEFT TOOLBAR
+- Select / Move
+- Pen
+- Highlighter
+- Point
+- Line
+- Ray
+- Arrow
+- Circle
+- Arc
+- Rectangle
+- Text
+- Equation
+- Eraser
+- Graph / Axes
+
+CENTER
+Large interactive board/canvas.
+
+RIGHT PANEL
+Tutorly tutor panel.
+
+Show:
+- current explanation
+- current instruction
+- “Show me”
+- “Let me try”
+- “Hint”
+- “Explain this”
+- Voice button
+
+The right panel should be collapsible.
+
+==================================================
+BOARD FEATURES
+==================================================
+
+Implement:
+
+1. Freehand drawing
+2. Highlighter
+3. Points
+4. Lines
+5. Rays
+6. Arrows
+7. Circles
+8. Arcs
+9. Rectangles
+10. Text labels
+11. Basic equations/text
+12. Eraser
+13. Select object
+14. Move object
+15. Delete selected object
+16. Undo
+17. Redo
+18. Clear board
+19. Zoom in/out
+20. Pan board
+
+Objects should remain editable after they are created.
+
+Prefer an SVG/object-based architecture for structured objects instead of flattening everything into one image.
+
+Freehand drawing may use SVG paths.
+
+==================================================
+TWO TEACHING MODES
+==================================================
+
+Add:
+
+SHOW ME
+
+Tutorly demonstrates the next step on the board.
+
+Example:
+
+Tutorly:
+“First draw a ray AB.”
+
+The board automatically draws it.
+
+LET ME TRY
+
+Tutorly gives the instruction but waits for the student to draw it.
+
+Example:
+
+Tutorly:
+“Now draw an arc with A as the centre.”
+
+Student draws it.
+
+Then mock Tutorly checks the action and responds.
+
+No real AI is required yet.
+
+==================================================
+STRUCTURED AI BOARD COMMANDS
+==================================================
+
+THIS IS VERY IMPORTANT.
+
+Create a reusable JavaScript board command engine.
+
+Later Tutorly’s AI should be able to control the board using structured JSON commands.
+
+Example:
+
+{
+  "action": "draw_line",
+  "id": "AB",
+  "from": {"x": 180, "y": 320},
+  "to": {"x": 620, "y": 320},
+  "label": "AB"
+}
+
+Support commands such as:
+
+draw_point
+draw_line
+draw_ray
+draw_arrow
+draw_circle
+draw_arc
+draw_rectangle
+draw_text
+draw_axes
+draw_graph
+highlight
+move_object
+delete_object
+clear_board
+zoom_to
+
+Create something similar to:
+
+BoardCommandEngine.execute(command)
+
+Do not hardcode AI drawing directly into button handlers.
+
+==================================================
+DEMO LESSON
+==================================================
+
+Include one working demo:
+
+“Construct an Angle Bisector”
+
+Steps:
+
+1. Draw base angle / rays.
+2. Draw an arc from the vertex.
+3. Mark intersection points.
+4. Draw arcs from those points.
+5. Mark their intersection.
+6. Draw the bisector.
+
+The user should be able to switch between:
+
+Show me
+and
+Let me try
+
+during the lesson.
+
+==================================================
+STUDENT INTERACTION
+==================================================
+
+Track student-created objects separately from Tutorly-created objects.
+
+Each object should contain basic metadata such as:
+
+{
+  id,
+  type,
+  createdBy: "student" | "tutorly",
+  coordinates,
+  label
+}
+
+This is important because later Tutorly needs to understand what the student changed.
+
+==================================================
+OBJECT SELECTION
+==================================================
+
+When the student clicks an object:
+
+- visually select it
+- allow move/delete
+- show its basic name/type
+
+Example:
+
+Selected:
+Point P
+
+Later this will allow students to ask:
+
+“Why is this point here?”
+
+==================================================
+VOICE PLACEHOLDER
+==================================================
+
+Include Tutorly’s voice button in the right panel.
+
+For now clicking it can show:
+
+“Voice Chat will connect here.”
+
+Do NOT build another voice system.
+
+Tutorly already has ElevenLabs Voice Chat and this will be connected later.
+
+==================================================
+SCIENCE SUPPORT PREPARATION
+==================================================
+
+Prepare the board architecture so we can later add:
+
+- labelled science diagrams
+- circuits
+- ray diagrams
+- biology diagrams
+- chemistry apparatus
+
+Do NOT build all of these now.
+
+The architecture should simply allow custom SVG objects/components to be added later.
+
+==================================================
+RESPONSIVE DESIGN
+==================================================
+
+Desktop:
+toolbar left
+board center
+Tutorly panel right
+
+Tablet:
+smaller toolbar
+collapsible tutor panel
+
+Mobile:
+board full screen
+tools in bottom tray
+Tutorly panel opens as a sheet
+
+==================================================
+FILES
+==================================================
+
+Keep structure clean, for example:
+
+index.html
+styles.css
+
+js/
+  board.js
+  board-tools.js
+  board-commands.js
+  board-history.js
+  lesson-demo.js
+  app.js
+
+Do not put the entire application in one HTML file.
+
+==================================================
+IMPORTANT
+==================================================
+
+Do not create fake APIs.
+
+Do not add authentication.
+
+Do not add API keys.
+
+Do not add billing.
+
+Do not redesign the rest of Tutorly.
+
+This prototype should focus ONLY on:
+
+Interactive Live Board
++
+Tutorly teaching panel
++
+structured board command engine
++
+angle bisector demo
+
+At the end:
+
+1. run the app
+2. fix console errors
+3. verify drawing/moving/undo/redo
+4. verify Show Me mode
+5. verify Let Me Try mode
+6. verify responsive layout
+
+Then tell me:
+- files created
+- how board objects are stored
+- how BoardCommandEngine works
+- how Tutorly can later control the board

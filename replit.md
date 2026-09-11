@@ -1,6 +1,6 @@
-# [Project name]
+# Tutorly Live Board
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An interactive, client-side geometry workspace prototype for Tutorly's guided angle-bisector lesson.
 
 ## Run & Operate
 
@@ -22,15 +22,23 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/tutorly-live-board/src/pages/LiveBoardPage.tsx` — lesson orchestration and local board session state
+- `artifacts/tutorly-live-board/src/components/BoardCanvas.tsx` — SVG board rendering and pointer interactions
+- `artifacts/tutorly-live-board/src/board/commands.ts` — structured `BoardCommandEngine`
+- `artifacts/tutorly-live-board/src/board/types.ts` — editable object and command metadata
+- `artifacts/tutorly-live-board/src/board/lesson.ts` — angle-bisector demo steps and tutor commands
+- `artifacts/tutorly-live-board/src/index.css` — Tutorly board theme and responsive layout
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Structured geometry is stored as editable SVG-friendly objects rather than a flattened bitmap.
+- Tutorly and student-created objects share one board model but retain separate `createdBy` metadata.
+- Tutor lesson actions route through `BoardCommandEngine.execute()` so a future AI command source can reuse the same interface.
+- This prototype intentionally stays client-only; lesson state persists only for the current browser session.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Tutorly Live Board lets students construct geometry with point, line, ray, arrow, circle, arc, rectangle, text, equation, pen, highlighter, axes, and graph tools. It includes selection, moving, erasing, zooming, panning, undo/redo, a collapsible tutor panel, and a six-step angle-bisector teaching demo with Show Me and Let Me Try modes.
 
 ## User preferences
 
@@ -38,7 +46,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- This is a standalone prototype and does not connect to Tutorly authentication, voice, AI APIs, billing, or a database.
+- Voice is intentionally a placeholder that reports where Tutorly's existing voice chat will connect later.
 
 ## Pointers
 
