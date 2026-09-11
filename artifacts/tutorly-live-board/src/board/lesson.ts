@@ -1,5 +1,16 @@
 import type { BoardCommand } from './types';
 
+export type LessonAnimation = { sequence: 'construction' | 'plot'; objectKinds?: string[] };
+export type LessonStep = {
+  title: string;
+  instruction: string;
+  explanation: string;
+  hint: string;
+  expectedTool: string;
+  focus: { x: number; y: number; width: number; height: number; padding?: number };
+  animation?: LessonAnimation;
+};
+
 export const lessonCommands: BoardCommand[][] = [
   [
     { type: 'draw_point', payload: { x: 390, y: 380, label: 'V', createdBy: 'tutorly' } },
@@ -26,11 +37,11 @@ export const lessonCommands: BoardCommand[][] = [
   ],
 ];
 
-export const lessonSteps = [
-  { title: 'Start with the angle', instruction: 'Draw two rays from the same vertex. This gives us the angle we will bisect.', hint: 'Choose Ray, click the vertex, then drag outward. Repeat for the second side.', expectedTool: 'ray' },
-  { title: 'Mark the vertex arc', instruction: 'Draw a small arc centered at the vertex so it crosses both sides of the angle.', hint: 'The arc tool starts at its center. Drag outward to set its radius and sweep.', expectedTool: 'arc' },
-  { title: 'Name the intersections', instruction: 'Place a point where the vertex arc meets each ray.', hint: 'Select Point and tap each ray where the small arc crosses it.', expectedTool: 'point' },
-  { title: 'Draw two matching arcs', instruction: 'From each intersection point, draw an arc with the same radius. Let the arcs reach toward one another.', hint: 'Start each arc at one of the marked points and use a similar radius.', expectedTool: 'arc' },
-  { title: 'Find their intersection', instruction: 'Mark the point where those two arcs meet inside the angle.', hint: 'The new point should sit between the rays, above the vertex.', expectedTool: 'point' },
-  { title: 'Draw the bisector', instruction: 'Connect the vertex to the new point. That ray is the angle bisector.', hint: 'Use Ray from the original vertex through the arc intersection.', expectedTool: 'ray' },
+export const lessonSteps: LessonStep[] = [
+  { title: 'Start with the angle', instruction: 'Every construction begins at one vertex. Watch the two rays open the angle.', explanation: 'Two rays share V, giving us the angle we will divide into two equal parts.', hint: 'Choose Ray, click the vertex, then drag outward. Repeat for the second side.', expectedTool: 'ray', focus: { x: 350, y: 145, width: 450, height: 470, padding: 22 }, animation: { sequence: 'construction', objectKinds: ['line'] } },
+  { title: 'Mark the vertex arc', instruction: 'A small arc centered at V crosses both sides of the angle.', explanation: 'The arc gives us two matching points without measuring the angle itself.', hint: 'The arc tool starts at its center. Drag outward to set its radius and sweep.', expectedTool: 'arc', focus: { x: 315, y: 305, width: 165, height: 155, padding: 42 }, animation: { sequence: 'construction', objectKinds: ['arc'] } },
+  { title: 'Name the intersections', instruction: 'The arc meets the rays at P and Q. Those points become our matching centers.', explanation: 'P and Q are equally far from V because they lie on one circle.', hint: 'Select Point and tap each ray where the small arc crosses it.', expectedTool: 'point', focus: { x: 395, y: 300, width: 125, height: 165, padding: 55 }, animation: { sequence: 'construction', objectKinds: ['point'] } },
+  { title: 'Draw two matching arcs', instruction: 'From P and Q, draw equal-radius arcs toward the middle.', explanation: 'Using the same radius makes every point on these arcs equally far from P and Q.', hint: 'Start each arc at one of the marked points and use a similar radius.', expectedTool: 'arc', focus: { x: 325, y: 205, width: 315, height: 350, padding: 42 }, animation: { sequence: 'construction', objectKinds: ['arc'] } },
+  { title: 'Find their intersection', instruction: 'The two arcs meet at R inside the angle.', explanation: 'R is the point that is equally far from P and Q, so it sits on the bisector.', hint: 'The new point should sit between the rays, above the vertex.', expectedTool: 'point', focus: { x: 620, y: 315, width: 130, height: 130, padding: 52 }, animation: { sequence: 'construction', objectKinds: ['point'] } },
+  { title: 'Draw the bisector', instruction: 'Connect V to R. The new ray splits the angle exactly in two.', explanation: 'The final ray is the angle bisector: both smaller angles are equal.', hint: 'Use Ray from the original vertex through the arc intersection.', expectedTool: 'ray', focus: { x: 350, y: 145, width: 450, height: 470, padding: 22 }, animation: { sequence: 'construction', objectKinds: ['line', 'label'] } },
 ];

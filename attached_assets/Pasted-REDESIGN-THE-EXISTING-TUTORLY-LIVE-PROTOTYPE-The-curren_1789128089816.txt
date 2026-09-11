@@ -1,0 +1,150 @@
+REDESIGN THE EXISTING TUTORLY LIVE PROTOTYPE.
+
+The current interface still looks too much like generic whiteboard software.
+
+Keep the existing board engine and Tutorly Guide functionality, but redesign the UX around an AUTOMATIC VISUAL LESSON.
+
+CORE CHANGES
+
+1. Remove the permanent left drawing toolbar from normal teaching mode.
+
+Student drawing tools should only appear after clicking:
+"My Work" or "Let me try".
+
+2. Make Tutorly's current lesson content much larger.
+
+The current construction is too small in a huge empty canvas.
+
+Automatically zoom and pan so the active lesson objects occupy roughly 50–70% of the available visual area.
+
+3. Tutorly-created objects are LOCKED.
+
+Students must not be able to:
+- move
+- resize
+- delete
+- select/edit
+
+Tutorly-created points, arcs, lines, labels, graphs and diagrams.
+
+Tutorly itself may still modify them internally through BoardCommandEngine.
+
+4. AUTOPLAY is the default.
+
+For a lesson:
+
+render step
+→ animate it
+→ show short explanation
+→ wait about 5 seconds
+→ automatically continue
+
+Add permanent playback controls:
+
+Previous
+Pause / Resume
+Next
+Replay
+
+Next skips the remaining wait immediately.
+
+5. Add smooth instructional animations.
+
+Examples:
+
+lines draw from start to end
+arcs draw progressively
+points fade/pop into place
+labels fade in
+highlights pulse subtly
+graphs plot progressively
+
+Do not spawn the entire lesson instantly.
+
+6. Simplify the Tutorly Guide panel.
+
+Show only:
+
+lesson name
+Step X of Y
+current instruction
+short explanation
+
+Actions:
+
+Let me try
+Talk it through
+Hint / Explain this when useful
+
+Remove unnecessary editor-oriented information.
+
+7. STUDENT WORK MODE
+
+When "Let me try" is selected:
+
+create/activate StudentLayer.
+
+Only StudentLayer objects can be moved, erased or edited by the student.
+
+TutorlyLayer remains locked.
+
+Visually distinguish the layers subtly without making the screen cluttered.
+
+8. Remove whiteboard/editor language from normal mode.
+
+Do not prominently show:
+
+"Canvas ready"
+object counts
+"choose a tool to begin"
+selection handles
+editing controls
+
+The user should feel like they are watching and participating in a Tutorly lesson, not operating design software.
+
+9. AUTO CAMERA
+
+Each lesson step may specify a focus area.
+
+Automatically pan/zoom to keep the current step clearly visible.
+
+BoardCommandEngine should support:
+
+zoom_to
+focus_objects
+
+10. KEEP THE CURRENT ANGLE BISECTOR DEMO
+
+But redesign its playback so:
+
+Step 1 automatically draws the base angle
+wait
+Step 2 draws the first arc
+wait
+Step 3 marks intersection points
+wait
+Step 4 draws equal arcs
+wait
+Step 5 marks their intersection
+wait
+Step 6 draws and highlights the angle bisector
+
+The completed construction should fill the canvas nicely.
+
+11. Prepare the same playback system for graphs.
+
+Example y = 2x + 1:
+
+axes
+→ equation
+→ points
+→ line
+→ slope/intercept highlight
+
+Each step should autoplay with approximately 5 seconds between stages.
+
+12. Keep Tutorly's current light blue/purple design language.
+
+Do not add backend APIs or authentication.
+
+Focus only on turning the current prototype from a WHITEBOARD into an AI VISUAL TEACHING EXPERIENCE.

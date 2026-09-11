@@ -1,4 +1,7 @@
 export type CreatedBy = 'student' | 'tutorly';
+export type BoardLayer = 'StudentLayer' | 'TutorlyLayer';
+export type AnimationKind = 'line' | 'arc' | 'point' | 'label' | 'highlight' | 'plot';
+export type AnimationSpec = { kind: AnimationKind; duration?: number; delay?: number };
 export type ToolId =
   | 'select' | 'pen' | 'highlighter' | 'point' | 'line' | 'ray' | 'arrow'
   | 'circle' | 'arc' | 'rectangle' | 'text' | 'equation' | 'eraser' | 'axes' | 'graph';
@@ -15,6 +18,8 @@ export type BoardObject = {
   stroke?: string;
   strokeWidth?: number;
   opacity?: number;
+  layer: BoardLayer;
+  animation?: AnimationSpec;
 };
 
 export type PointObject = BoardObject & { type: 'point'; coordinates: { x: number; y: number } };
@@ -31,6 +36,7 @@ export type AnyBoardObject =
   | PathObject | TextObject | AxesObject;
 
 export type BoardViewport = { zoom: number; panX: number; panY: number };
+export type FocusArea = { x: number; y: number; width: number; height: number; padding?: number };
 
 export type BoardState = {
   objects: AnyBoardObject[];
@@ -50,7 +56,9 @@ export type BoardCommand =
   | { type: 'move_object'; payload: { id: string; dx: number; dy: number } }
   | { type: 'delete_object'; payload: { id: string } }
   | { type: 'clear_board' }
-  | { type: 'zoom_to'; payload: { zoom?: number; panX?: number; panY?: number } };
+  | { type: 'clear_student_layer' }
+  | { type: 'zoom_to'; payload: { zoom?: number; panX?: number; panY?: number } }
+  | { type: 'focus_objects'; payload: { objectIds?: string[]; area?: FocusArea; padding?: number } };
 
 export const isDrawableObject = (object: AnyBoardObject) =>
   !['axes', 'graph'].includes(object.type);

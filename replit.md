@@ -22,23 +22,24 @@ An interactive, client-side geometry workspace prototype for Tutorly's guided an
 
 ## Where things live
 
-- `artifacts/tutorly-live-board/src/pages/LiveBoardPage.tsx` — lesson orchestration and local board session state
+- `artifacts/tutorly-live-board/src/pages/LiveBoardPage.tsx` — autoplay lesson orchestration, playback controls, and student work mode
 - `artifacts/tutorly-live-board/src/components/BoardCanvas.tsx` — SVG board rendering and pointer interactions
-- `artifacts/tutorly-live-board/src/board/commands.ts` — structured `BoardCommandEngine`
-- `artifacts/tutorly-live-board/src/board/types.ts` — editable object and command metadata
-- `artifacts/tutorly-live-board/src/board/lesson.ts` — angle-bisector demo steps and tutor commands
+- `artifacts/tutorly-live-board/src/board/commands.ts` — structured `BoardCommandEngine`, camera focus, and layer operations
+- `artifacts/tutorly-live-board/src/board/types.ts` — layered object, animation, focus, and command metadata
+- `artifacts/tutorly-live-board/src/board/lesson.ts` — angle-bisector demo steps, focus areas, and playback metadata
 - `artifacts/tutorly-live-board/src/index.css` — Tutorly board theme and responsive layout
 
 ## Architecture decisions
 
 - Structured geometry is stored as editable SVG-friendly objects rather than a flattened bitmap.
-- Tutorly and student-created objects share one board model but retain separate `createdBy` metadata.
-- Tutor lesson actions route through `BoardCommandEngine.execute()` so a future AI command source can reuse the same interface.
+- Tutorly and student-created objects share one board model but retain separate `TutorlyLayer` / `StudentLayer` metadata.
+- Tutorly objects are locked to pointer editing; internal lesson actions still route through `BoardCommandEngine.execute()`.
+- Lesson camera framing is a reusable `focus_objects` command driven by step metadata, not UI-specific coordinates.
 - This prototype intentionally stays client-only; lesson state persists only for the current browser session.
 
 ## Product
 
-Tutorly Live Board lets students construct geometry with point, line, ray, arrow, circle, arc, rectangle, text, equation, pen, highlighter, axes, and graph tools. It includes selection, moving, erasing, zooming, panning, undo/redo, a collapsible tutor panel, and a six-step angle-bisector teaching demo with Show Me and Let Me Try modes.
+Tutorly Live Board presents a six-step angle-bisector lesson as an autoplay visual explanation with animated geometry, camera focus, playback controls, and a simplified Tutorly guide. Students can enter My Work / Let Me Try mode to draw on a separate editable layer while Tutorly's construction remains locked.
 
 ## User preferences
 
